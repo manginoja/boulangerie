@@ -1,0 +1,19 @@
+{
+  "name": "boulangerie",
+  "version": "1.0.0",
+  "main": "bakery.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.10"
+  },
+  "keywords": [],
+  "description": ""
+}
