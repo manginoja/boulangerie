@@ -1,17 +1,16 @@
-import './style.css'
 import * as THREE from 'three';
-import { OrbitControls }  from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {OutlineEffect} from 'three/examples/jsm/effects/OutlineEffect.js'; 
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import * as TWEEN from 'three/examples/jsm/libs/tween.module.js'
-import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
-import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js'
-import {GUI} from 'three/examples/jsm/libs/lil-gui.module.min.js'
-import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js'; 
+import { OrbitControls }  from './three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from './three/examples/jsm/loaders/GLTFLoader.js';
+import {OutlineEffect} from './three/examples/jsm/effects/OutlineEffect.js'; 
+import { EffectComposer } from './three/examples/jsm/postprocessing/EffectComposer.js';
+import * as TWEEN from './three/examples/jsm/libs/tween.module.js'
+import {UnrealBloomPass} from './three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import {OutputPass} from './three/examples/jsm/postprocessing/OutputPass.js'
+import {GUI} from './three/examples/jsm/libs/lil-gui.module.min.js'
+import {DRACOLoader} from './three/examples/jsm/loaders/DRACOLoader.js'; 
 import { MeshToonMaterial } from 'three';
-import Stats from 'three/examples/jsm/libs/stats.module'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import Stats from './three/examples/jsm/libs/stats.module'
+import { RenderPass } from './three/examples/jsm/postprocessing/RenderPass.js';
 
 //TODO:
 // add a night mode button
