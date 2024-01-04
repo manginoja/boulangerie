@@ -17,9 +17,15 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 // add a night mode button
 // fill in inside
 // branches inside trees
-// brighten lamps at night--they could flicker on?
+// they could flicker on?
 // menu on table that moves up to eye level for projects?
 // mailbox for contact me?
+// street lights
+// what could float on the water? paper boat perhaps? parade of paper boats??
+// napkin
+// hanging door sign -- "open" that flips to "closed" at night?
+// thing that moves around to choose sections
+
 
 /******************************** GLOBAL SETTINGS ***********************************/
 
@@ -27,6 +33,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 let parallax = true;
 let cameraPosition = new THREE.Vector3(8, 5, 14);
 let shadow = true;
+let daytime = true;
+
 
 let aboutCameraTarget = new THREE.Vector3(-3, .58, 4.26);
 let projectCameraTarget = new THREE.Vector3(-.58, 1.06, 2.06)
@@ -34,7 +42,7 @@ let projectCameraTarget = new THREE.Vector3(-.58, 1.06, 2.06)
 
 let upperYLimit = 10;
 let lowerYLimit = 2;
-let upperZLimit = 17;
+let upperZLimit = 15.5;
 let lowerZLimit = 13;
 
 // render settings
@@ -46,6 +54,7 @@ const sceneFile = 'bakery.glb';
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(.52,.8,.92);
 //scene.background = new THREE.Color(0xffb3b3);
+
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 2, 40 );
 camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
@@ -68,23 +77,29 @@ if (shadow) {
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild( renderer.domElement );
 
-let effect = new OutlineEffect(renderer, {
-  defaultThickness: 0.003
-})
 
+/*
 const renderTarget = new THREE.WebGLRenderTarget(
   window.innerWidth * renderer.getPixelRatio(),
   window.innerHeight * renderer.getPixelRatio(),
   {format: THREE.RGBAFormat,
     colorSpace: THREE.SRGBColorSpace}
-)
+)*/
+
+
 
 let controls = new OrbitControls( camera, renderer.domElement );
 
+
+
+let effect = new OutlineEffect(renderer);
+
+
 const composer = new EffectComposer(renderer)
 composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), .15, 0.4, 1 ));
-composer.addPass(new OutputPass())
+//composer.addPass(new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), .15, 0.4, 1 ));
+//composer.addPass(new OutputPass())
+
 
 const stats = new Stats()
 document.body.appendChild(stats.dom)
@@ -132,7 +147,6 @@ lanternRight.shadow.normalBias = 1e-2;
 const directionalLight = new THREE.DirectionalLight(0xff643d, 6)
 directionalLight.color.set(0xf2f2f2);
 scene.add(directionalLight)
-console.log(directionalLight)
 directionalLight.position.set(-9.87, 6.48, 5.24);
 directionalLight.color.set(0xffcccc);
 directionalLight.castShadow = true;
@@ -140,21 +154,26 @@ directionalLight.shadow.mapSize.width = 2048;
 directionalLight.shadow.mapSize.height = 2048;
 
 
-
-
 /******************************** BAKERY ***********************************/
+
+
+
+
 var gLoader = new GLTFLoader();
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath( 'node_modules/three/examples/jsm/libs/draco/gltf/' );
 gLoader.setDRACOLoader( dracoLoader );
 
 let materialMap = {};
+let materials = [];
 
 let mixer;
 let animations = [];
 let newspaperDoor;
 let newspaperDoor1;
 let fan;
+let lanternLightMaterial;
+let windows = [];
 
 gLoader.load(sceneFile, function(object) {
   mixer = new THREE.AnimationMixer(object.scene)
@@ -162,6 +181,7 @@ gLoader.load(sceneFile, function(object) {
   object.scene.traverse(function (child) {
       if (child.isMesh) {
         // set toon materials -> do not duplicate
+        /*
         if (!(child.material.color.getHex in materialMap)) {
             const format = ( renderer.capabilities.isWebGL2 ) ? THREE.RedFormat : THREE.LuminanceFormat;
             const colors = new Uint8Array(4);
@@ -179,20 +199,49 @@ gLoader.load(sceneFile, function(object) {
             newColor.setHSL(outlineColor.h, outlineColor.s, outlineColor.l)
             materialMap[child.material.color.getHex()] = new MeshToonMaterial({color: child.material.color, gradientMap: gradientMap, side: THREE.FrontSide})
             materialMap[child.material.color.getHex()].userData.outlineParameters = {
-              color: [newColor.r, newColor.g, newColor.b]
+              color: [newColor.r, newColor.g, newColor.b],
+              thickness: 0.003
             }
             
         }
         child.material = materialMap[child.material.color.getHex()]
+        materials.push(child.material);*/
+
+        let outlineColor = {};
+        child.material.color.getHSL(outlineColor)
+        outlineColor.l /= 4;
+        let newColor = new THREE.Color(1, 1, 1);
+        newColor.setHSL(outlineColor.h, outlineColor.s, outlineColor.l)
+        let glossValue = 0;
+        if (child.name.includes("gloss")) {
+          glossValue = 20;
+        }
+        child.material = new THREE.ShaderMaterial({
+          lights: true,
+          uniforms: {
+            ...THREE.UniformsLib.lights,
+            uColor: {value: child.material.color},
+            uGlossiness: {value: glossValue}
+          },
+          vertexShader: document.getElementById("toonVertexShader").textContent,
+          fragmentShader: document.getElementById("toonFragmentShader").textContent,
+        })
+        child.material.userData.outlineParameters = {
+          color: [newColor.r, newColor.g, newColor.b],
+          thickness: 0.003
+        }
+        
+        materials.push(child.material)
+
 
         // set lantern material to standard -> for bloom
         if (child.name.includes("lanternLight")) {
-          console.log(child)
           child.material = new THREE.MeshStandardMaterial({
             toneMapped: false,
             emissive: "yellow",
-            emissiveIntensity: 1
+            emissiveIntensity: 0
           })
+          lanternLightMaterial = child.material;
         }
 
 
@@ -202,11 +251,15 @@ gLoader.load(sceneFile, function(object) {
         }
         child.receiveShadow = true
         if (child.name.includes("window")) {
+          child.material = new MeshToonMaterial({color: 0xffffff});
           child.material.transparent = true;
           child.material.opacity = 0.7
+          windows.push(child.material);
         } else if (child.name.includes("doorWindow")) {
+          child.material = new MeshToonMaterial({color: 0xffffff});
           child.material.transparent = true;
           child.material.opacity = 0.3
+          windows.push(child.material);
         } else if (child.name.includes("newspaperDoor003_1")) {
           newspaperDoor = child;
         } else if (child.name.includes("newspaperDoor003_2")) {
@@ -214,10 +267,16 @@ gLoader.load(sceneFile, function(object) {
         } else if (child.name.includes("fan")) {
           fan = child;
           startFan();
+        } else if (child.name.includes("Pigeon")) {
+          child.material = new MeshToonMaterial({color: 0x444444});
+          child.material.userData.outlineParameters = {
+            color: [.03, .03, .03]
+          }
         }
         if (child.name.includes("Text") || child.name.includes("side")) {
           child.material.userData.outlineParameters = {
-            color: [0, 0, 0]
+            color: [0, 0, 0],
+            thickness: 0.01
           }
         }
         
@@ -244,40 +303,39 @@ let smokeGrowth = 1.005
 let puffs = [];
 
 function createSmoke() {
-  //create sphere of random size
   let smokeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, transparent:true, opacity:.7 } )
   let smokeSize = Math.random() * .1 + 0.07
   let smokeGeometry = new THREE.SphereGeometry(smokeSize, 8, 8);
   let smoke = new THREE.Mesh(
     smokeGeometry, smokeMaterial
   );
+  puffs.push(smoke)
   let spawnX = Math.random() * .1 - 1.05
   let spawnZ = Math.random() * .1 -1.45
   smoke.position.set(spawnX, 6, spawnZ)
-  scene.add(smoke)
-  //add to array, (increase in animate function)
-  puffs.push(smoke)
+  scene.add(smoke)  
 }
 
 /******************************** FAN ***********************************/
-
+let fanTween;
 function startFan() {
-  new TWEEN.Tween(fan.rotation).to({x: 2 * Math.PI}, 2500).repeat(2500).start();
+  fanTween = new TWEEN.Tween(fan.rotation).to({x: 2 * Math.PI}, 2500).repeat(2500);
+  fanTween.start();
 }
 
 /******************************** GUI ***********************************/
 
 
 function startGUI() {
-  const gui = new GUI();
-let point = lanternLeft
+const gui = new GUI();
+let point = directionalLight
   const params = {
       'x': point.position.x,
       'y': point.position.y,
       'z': point.position.z,
       'bias': point.shadow.bias,
       'distance': lanternLeft.distance,
-      'intensity': lanternLeft.intensity,
+      'intensity': directionalLight.intensity,
       'decay': lanternLeft.decay
   };
 
@@ -296,35 +354,166 @@ let point = lanternLeft
   gui.add( params, 'distance', 0, 50).onChange( function ( val ) {
     lanternLeft.distance = val;
   } );
-  gui.add( params, 'intensity', 0, 50).onChange( function ( val ) {
-    lanternLeft.intensity = val;
+  gui.add( params, 'intensity', 0, 6).onChange( function ( val ) {
+    directionalLight.intensity = val;
   } );
   gui.add( params, 'decay', 0, 2).onChange( function ( val ) {
     lanternLeft.decay = val;
   } );
-  gui.addColor(lanternLeft, 'color')
+  gui.addColor(myParams, "waterColor");
+  gui.addColor(myParams, "foamColor");
 }
 
 /******************************** DAY/NIGHT CYCLE ***********************************/
 
+let stopSmoking = false;
 
 function timeChange() {
+  stopSmoking = true;
   let timeDelay = 1500
-  new TWEEN.Tween(scene.background).to({r: .0325, g: .05, b: .0575}, timeDelay).start();
+  new TWEEN.Tween(scene.background).to({r: 0, g: 0, b: .005}, timeDelay).start();
   new TWEEN.Tween(ambientLight).to({intensity: 0.3}, timeDelay).start()
   new TWEEN.Tween(ambientLight.color).to({r: .509, g: .702, b: .753}, timeDelay).start()
-  new TWEEN.Tween(directionalLight).to({intensity: 0}, timeDelay).start()
-  new TWEEN.Tween(pointLight).to({intensity: 0}, timeDelay).start()
+  new TWEEN.Tween(directionalLight.color).to({r: .22, g: .271, b: .522}, timeDelay).start()
+  new TWEEN.Tween(water.material.uniforms.waterColor.value).to({r: 0.005, g: 0.005, b: 0.02}, timeDelay).start();
+  new TWEEN.Tween(water.material.uniforms.foamColor.value).to({r: 0.204, g: 0.196, b: 0.1529}, timeDelay).start();
+  for (let i = 0; i < windows.length; i++) {
+    new TWEEN.Tween(windows[i]).to({opacity: 1}, timeDelay).start();
+  }
+  new TWEEN.Tween(offset).to({value: 0}, 1000).start();
+  
+  for (let i = 0; i < materials.length; i++) {
+    new TWEEN.Tween(materials[i].userData.outlineParameters).to({thickness: 0.00001}, timeDelay).start();
+  }
 
+  fanTween.stop();
+  TWEEN.remove(fanTween)
+  new TWEEN.Tween(fan.rotation).to({x: 2 * Math.PI}, timeDelay).easing(TWEEN.Easing.Quadratic.Out).start();
 
-  new TWEEN.Tween(lanternLeft).to({intensity: 5}, timeDelay + 2000).start()
-  new TWEEN.Tween(lanternRight).to({intensity: 15}, timeDelay + 2000).start()
+  setTimeout(function() {
+    daytime = false
+    composer.addPass(new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), .15, 0.4, 1 ));
+    
+  }, timeDelay);
+
+  setTimeout(function() {
+    new TWEEN.Tween(lanternLightMaterial).to({emissiveIntensity: 1}, 1000).start()
+    new TWEEN.Tween(lanternLeft).to({intensity: 5}, timeDelay + 2000).start()
+    new TWEEN.Tween(lanternRight).to({intensity: 15}, timeDelay + 2000).start()
+    composer.addPass(new OutputPass())
+    new TWEEN.Tween(offset).to({value: 0.01}, 1000).start();
+  }, timeDelay + 500);
+
+  puffs.forEach((puff) => {
+    new TWEEN.Tween(puff.material).to({opacity: 0}, 1000).start()
+  });
 }
 
+//document.body.addEventListener('click', timeChange)
 
-document.body.addEventListener('click', timeChange)
+/******************************** WATER ***********************************/
+let clock = new THREE.Clock();
+var supportsDepthTextureExtension = false
 
+
+  let renderTarget = new THREE.WebGLRenderTarget(
+    window.innerWidth * pixelRatio,
+    window.innerHeight * pixelRatio
+  );
+  renderTarget.texture.minFilter = THREE.NearestFilter;
+  renderTarget.texture.magFilter = THREE.NearestFilter;
+  renderTarget.texture.generateMipmaps = false;
+  renderTarget.stencilBuffer = false;
+/*
+  if (supportsDepthTextureExtension === true) {
+    renderTarget.depthTexture = new THREE.DepthTexture();
+    renderTarget.depthTexture.type = THREE.UnsignedShortType;
+    renderTarget.depthTexture.minFilter = THREE.NearestFilter;
+    renderTarget.depthTexture.maxFilter = THREE.NearestFilter;
+  }*/
+
+  let depthMaterial = new THREE.MeshDepthMaterial();
+  depthMaterial.depthPacking = THREE.RGBADepthPacking;
+  depthMaterial.blending = THREE.NoBlending;
+
+
+
+var myParams = {
+  foamColor: 0xffd1d1,
+  waterColor: 0x2d385c,
+  threshold: 0.05
+};
+
+var dudvMap = new THREE.TextureLoader().load(
+  "https://i.imgur.com/hOIsXiZ.png"
+);
+dudvMap.wrapS = dudvMap.wrapT = THREE.RepeatWrapping;
+
+var uniforms = {
+  time: {
+    value: 0
+  },
+  threshold: {
+    value: 0.1
+  },
+  tDudv: {
+    value: null
+  },
+  tDepth: {
+    value: null
+  },
+  cameraNear: {
+    value: 0
+  },
+  cameraFar: {
+    value: 0
+  },
+  resolution: {
+    value: new THREE.Vector2()
+  },
+  foamColor: {
+    value: new THREE.Color()
+  },
+  waterColor: {
+    value: new THREE.Color()
+  }
+};
+
+var waterGeometry = new THREE.PlaneGeometry(10, 10, 32, 32);
+var waterMaterial = new THREE.ShaderMaterial({
+  defines: {
+    DEPTH_PACKING: supportsDepthTextureExtension === true ? 0 : 1,
+    ORTHOGRAPHIC_CAMERA: 0
+  },
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib["fog"], uniforms]),
+  vertexShader: document.getElementById("vertexShader").textContent,
+  fragmentShader: document.getElementById("fragmentShader").textContent,
+  fog: true
+});
+
+waterMaterial.uniforms.cameraNear.value = camera.near;
+waterMaterial.uniforms.cameraFar.value = camera.far;
+waterMaterial.uniforms.resolution.value.set(
+  window.innerWidth * pixelRatio,
+  window.innerHeight * pixelRatio
+);
+waterMaterial.uniforms.tDudv.value = dudvMap;
+waterMaterial.uniforms.tDepth.value =
+  supportsDepthTextureExtension === true
+    ? renderTarget.depthTexture
+    : renderTarget.texture;
+
+let water = new THREE.Mesh(waterGeometry, waterMaterial);
+water.position.set(3, -.3, 9.7)
+water.rotation.x = -Math.PI * 0.5;
+scene.add(water);
+
+water.material.uniforms.foamColor.value.set(myParams.foamColor);
+water.material.uniforms.waterColor.value.set(myParams.waterColor);
+
+console.log(water);
 /******************************** TAB TRANSITIONS ***********************************/
+
 
 document.getElementById("about").addEventListener('click', goToAbout)
 document.getElementById("projects").addEventListener('click', goToProjects)
@@ -377,9 +566,9 @@ let crumbs = [];
 function crumbsFly(left) {
   let crumbPosition;
   if (left) {
-    crumbPosition = new THREE.Vector3(2.1, 0, 2)
+    crumbPosition = new THREE.Vector3(2.6, 0, 2.7)
   } else {
-    crumbPosition = new THREE.Vector3(2.14, 0, 1.32)
+    crumbPosition = new THREE.Vector3(2.64, 0, 2.02)
   }
   let crumbGeometry = new THREE.SphereGeometry(.01, 8, 8)
   let crumbMaterial = new THREE.MeshToonMaterial({color: 0xB7916D, transparent: true, opacity: 1})
@@ -421,7 +610,13 @@ function updateCrumbs() {
 
 /******************************** ANIMATE ***********************************/
 
-setTimeout(function() {renderer.shadowMap.autoUpdate = false;}, 2000)
+//setTimeout(function() {renderer.shadowMap.autoUpdate = false;}, 2000)
+
+let offset = {
+  value: 0.01
+}
+
+
 function animate() {
   stats.begin()
   
@@ -432,14 +627,14 @@ function animate() {
   update();
   
   let smokeChance = Math.random()
-  if (smokeChance < 0.1) {
+  if (smokeChance < 0.1 && !stopSmoking) {
     createSmoke();
   }
 
   if (crumbs.length > 0) {
     updateCrumbs();
   }
-
+  
   puffs.forEach((puff) => {
     puff.position.y += .02;
     puff.scale.set(puff.scale.x * smokeGrowth, puff.scale.y * smokeGrowth, puff.scale.z * smokeGrowth)
@@ -454,8 +649,8 @@ function animate() {
   // MOUSE PARALLAX
   
   if (parallax) {
-      let newZ = camera.position.z + (cameraPosition.z + mouse.x - camera.position.z) * .01 ;
-      let newY = camera.position.y + (cameraPosition.y - mouse.y - camera.position.y) * .01 ;
+      let newZ = camera.position.z + (cameraPosition.z + mouse.x - camera.position.z) * offset.value;
+      let newY = camera.position.y + (cameraPosition.y - mouse.y - camera.position.y) * offset.value;
       if (newZ < upperZLimit && newZ > lowerZLimit) {
         camera.position.z = newZ
       }
@@ -463,10 +658,27 @@ function animate() {
         camera.position.y = newY
       }
   }
+
+  water.visible = false; // we don't want the depth of the water
+  scene.overrideMaterial = depthMaterial;
+
+  renderer.setRenderTarget(renderTarget);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+
+  scene.overrideMaterial = null;
+  water.visible = true;
+
+  var time = clock.getElapsedTime();
+
+  water.material.uniforms.time.value = time / 4;
   
   camera.lookAt(cameraTarget);
-  effect.render(scene, camera);
- // composer.render();
+  if (daytime) {
+    effect.render(scene, camera);
+  } else {
+    composer.render();
+  }
   TWEEN.update();
   stats.end()
 };
