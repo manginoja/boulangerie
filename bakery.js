@@ -1,5 +1,4 @@
-import * as THREE from '../node_modules/three/build/three.module.js';
-/*
+import * as THREE from '/node_modules/three/build/three.module.js';
 import { OrbitControls }  from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import {OutlineEffect} from './node_modules/three/examples/jsm/effects/OutlineEffect.js'; 
@@ -11,7 +10,7 @@ import {GUI} from './node_modules/three/examples/jsm/libs/lil-gui.module.min.js'
 import {DRACOLoader} from './node_modules/three/examples/jsm/loaders/DRACOLoader.js'; 
 import { MeshToonMaterial } from './node_modules/three/build/three.module.js';
 import Stats from './node_modules/three/examples/jsm/libs/stats.module'
-import { RenderPass } from './node_modules/three/examples/jsm/postprocessing/RenderPass.js';*/
+import { RenderPass } from './node_modules/three/examples/jsm/postprocessing/RenderPass.js';
 
 //TODO:
 // add a night mode button
