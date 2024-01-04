@@ -1,16 +1,16 @@
-import * as THREE from '/node_modules/three/build/three.module.js';
-import { OrbitControls }  from './node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader.js';
-import {OutlineEffect} from './node_modules/three/examples/jsm/effects/OutlineEffect.js'; 
-import { EffectComposer } from './node_modules/three/examples/jsm/postprocessing/EffectComposer.js';
-import * as TWEEN from './node_modules/three/examples/jsm/libs/tween.module.js'
-import {UnrealBloomPass} from './node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js'
-import {OutputPass} from './node_modules/three/examples/jsm/postprocessing/OutputPass.js'
-import {GUI} from './node_modules/three/examples/jsm/libs/lil-gui.module.min.js'
-import {DRACOLoader} from './node_modules/three/examples/jsm/loaders/DRACOLoader.js'; 
-import { MeshToonMaterial } from './node_modules/three/build/three.module.js';
-import Stats from './node_modules/three/examples/jsm/libs/stats.module'
-import { RenderPass } from './node_modules/three/examples/jsm/postprocessing/RenderPass.js';
+import * as THREE from './three/build/three.module.js';
+import { OrbitControls }  from './three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from './three/examples/jsm/loaders/GLTFLoader.js';
+import {OutlineEffect} from './three/examples/jsm/effects/OutlineEffect.js'; 
+import { EffectComposer } from './three/examples/jsm/postprocessing/EffectComposer.js';
+import * as TWEEN from './three/examples/jsm/libs/tween.module.js'
+import {UnrealBloomPass} from './three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import {OutputPass} from './three/examples/jsm/postprocessing/OutputPass.js'
+import {GUI} from './three/examples/jsm/libs/lil-gui.module.min.js'
+import {DRACOLoader} from './three/examples/jsm/loaders/DRACOLoader.js'; 
+import { MeshToonMaterial } from './three/build/three.module.js';
+import Stats from './three/examples/jsm/libs/stats.module'
+import { RenderPass } from './three/examples/jsm/postprocessing/RenderPass.js';
 
 //TODO:
 // add a night mode button
